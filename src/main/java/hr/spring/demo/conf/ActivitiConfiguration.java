@@ -57,6 +57,7 @@ public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
     
     private ActivitiSpringTransactionInterceptor txInterceptor;
     
+    // @see: http://blog.progs.be/727/transaction-spring-activiti
     @Override
     protected CommandInterceptor createTransactionInterceptor() {
         if (transactionManager == null) {
@@ -96,8 +97,12 @@ public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
 
       config.setDataSource(activitiDataSource);
       config.setTransactionManager(transactionManager);
-      config.setJpaEntityManagerFactory(activitiEntityManagerFactory);
+      //config.setJpaEntityManagerFactory(activitiEntityManagerFactory);
       config.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_CREATE_DROP);
+      
+      config.setJpaCloseEntityManager(true);
+      config.setTransactionsExternallyManaged(true);
+      config.setJpaHandleTransaction(false);
       
       config.setJobExecutorActivate(false);
       config.setDeploymentResources(procDefResources.toArray(new Resource[procDefResources.size()]));
@@ -116,7 +121,6 @@ public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
       return config;
     }
 
-    @Primary
     @Bean
     public ProcessEngineFactoryBean processEngine() throws Exception {
       ProcessEngineFactoryBean factoryBean = new ProcessEngineFactoryBean();

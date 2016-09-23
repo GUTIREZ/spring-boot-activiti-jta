@@ -13,6 +13,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaVendorAdapter;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.Database;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 
 import bitronix.tm.resource.jdbc.PoolingDataSource;
 
@@ -24,26 +26,34 @@ import bitronix.tm.resource.jdbc.PoolingDataSource;
 		basePackages = "hr.spring.demo.repository")
 public class PrimaryDataSourceConfiguration {
 	
-	@Autowired
-	private JpaVendorAdapter jpaVendorAdapter;
+	@Bean
+	public JpaVendorAdapter jpaVendorAdapter() {
+		HibernateJpaVendorAdapter hibernateJpaVendorAdapter = new HibernateJpaVendorAdapter();
+		hibernateJpaVendorAdapter.setShowSql(true);
+		hibernateJpaVendorAdapter.setGenerateDdl(true);
+		hibernateJpaVendorAdapter.setDatabase(Database.POSTGRESQL);
+		return hibernateJpaVendorAdapter;
+	}
 	
-	@Primary
-	@Bean(initMethod = "init", destroyMethod = "close")
+
+	@Bean
     @ConfigurationProperties(prefix = "primary.datasource")
     public DataSource dataSource() {
 		return new PoolingDataSource();
     }
 	
-	@Primary
+
 	@Bean
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws Throwable {
 
 		HashMap<String, Object> properties = new HashMap<String, Object>();
 		properties.put("javax.persistence.transactionType", "JTA");
+		properties.put("hibernate.transaction.manager_lookup_class", "org.hibernate.transaction.BTMTransactionManagerLookup");
+		properties.put("hibernate.transaction.jta.platform", "org.hibernate.service.jta.platform.internal.BitronixJtaPlatform");
 
 		LocalContainerEntityManagerFactoryBean entityManager = new LocalContainerEntityManagerFactoryBean();
 		entityManager.setJtaDataSource(dataSource());
-		entityManager.setJpaVendorAdapter(jpaVendorAdapter);
+		entityManager.setJpaVendorAdapter(jpaVendorAdapter());
 		entityManager.setPackagesToScan("hr.spring.demo.domain");
 		entityManager.setPersistenceUnitName("primaryPersistenceUnit");
 		entityManager.setJpaPropertyMap(properties);
