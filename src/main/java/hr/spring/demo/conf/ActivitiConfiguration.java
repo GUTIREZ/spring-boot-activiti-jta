@@ -13,7 +13,6 @@ import org.activiti.engine.HistoryService;
 import org.activiti.engine.IdentityService;
 import org.activiti.engine.ManagementService;
 import org.activiti.engine.ProcessEngine;
-import org.activiti.engine.ProcessEngineConfiguration;
 import org.activiti.engine.ProcessEngines;
 import org.activiti.engine.RepositoryService;
 import org.activiti.engine.RuntimeService;
@@ -30,21 +29,25 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.transaction.jta.JtaTransactionManager;
 
 @Configuration
-@DependsOn({"activitiDataSource", "transactionManager", "activitiEntityManagerFactory"})
+@DependsOn({"activitiDataSource", "transactionManager"})
 public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivitiConfiguration.class);
+	
+	@Autowired
+	private Environment env;
 	
     @Autowired
     private DataSource activitiDataSource;
     
     @Autowired
-    private EntityManagerFactory activitiEntityManagerFactory;
+    private EntityManagerFactory entityManagerFactory;
     
     @Autowired
     private JtaTransactionManager transactionManager;
@@ -97,9 +100,10 @@ public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
 
       config.setDataSource(activitiDataSource);
       config.setTransactionManager(transactionManager);
-      //config.setJpaEntityManagerFactory(activitiEntityManagerFactory);
-      config.setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_CREATE_DROP);
+      config.setJpaEntityManagerFactory(entityManagerFactory);
+      config.setDatabaseSchemaUpdate(env.getProperty("activiti.database-schema-update", String.class, "false"));
       
+      // @see: http://www.activiti.org/userguide/#jpaconfiguration
       config.setJpaCloseEntityManager(true);
       config.setTransactionsExternallyManaged(true);
       config.setJpaHandleTransaction(false);
@@ -117,7 +121,6 @@ public class ActivitiConfiguration extends SpringProcessEngineConfiguration {
 
       config.setHistoryLevel(activitiProperties.getHistoryLevel());
       
-
       return config;
     }
 

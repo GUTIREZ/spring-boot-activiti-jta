@@ -4,7 +4,6 @@ import java.util.HashMap;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -35,15 +34,14 @@ public class PrimaryDataSourceConfiguration {
 		return hibernateJpaVendorAdapter;
 	}
 	
-
 	@Bean
     @ConfigurationProperties(prefix = "primary.datasource")
     public DataSource dataSource() {
 		return new PoolingDataSource();
     }
 	
-
 	@Bean
+	@Primary
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory() throws Throwable {
 
 		HashMap<String, Object> properties = new HashMap<String, Object>();
@@ -59,5 +57,4 @@ public class PrimaryDataSourceConfiguration {
 		entityManager.setJpaPropertyMap(properties);
 		return entityManager;
 	}
-	
 }
